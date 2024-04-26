@@ -1,0 +1,7 @@
+---
+- hosts: all
+  #become: yes
+  gather_facts: yes
+
+  roles:
+  - { role: zabbix-agent-windows, tags: zbx-agt }

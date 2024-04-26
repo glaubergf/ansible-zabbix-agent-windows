@@ -1,0 +1,2 @@
+# tasks file for roles/zabbix-agent-windows
+- include: zabbix_agent_windows.yml

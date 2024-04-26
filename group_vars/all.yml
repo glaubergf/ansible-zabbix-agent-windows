@@ -1,0 +1,18 @@
+---
+# --- client windows (10 - kvm)
+win10_kvm_public_ip : 192.100.10.192
+win10_kvm_ansible_user : mcnd2
+win10_kvm_ansible_password : xxxxxxxxx
+win10_kvm_ansible_become_password : xxxxxxxxx
+
+# --- client windows (11 - kvm)
+win11_kvm_public_ip : 192.100.10.144
+win11_kvm_ansible_user : mcnd2
+win11_kvm_ansible_password : xxxxxxxxx
+win11_kvm_ansible_become_password : xxxxxxxxx
+
+# --- client windows (10 - notebook dell velhinho)
+win10_dell_public_ip : 192.168.0.103
+win10_dell_ansible_user : mcnd2
+win10_dell_ansible_password : xxxxxxxxx
+win10_dell_ansible_become_password : xxxxxxxxx

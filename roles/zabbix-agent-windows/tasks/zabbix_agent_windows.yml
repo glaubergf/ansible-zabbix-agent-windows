@@ -1,0 +1,114 @@
+---
+- name: Baixando o pacote Zabbix Agent ".zip"
+  ansible.windows.win_get_url:
+    url: "https://cdn.zabbix.com/zabbix/binaries/stable/6.4/6.4.13/zabbix_agent-6.4.13-windows-amd64-openssl.zip"
+    dest: C:\Windows\Temp\zabbix_agent-6.4.13-windows-amd64-openssl.zip
+  tags: zbx-agt
+
+- name: Descompactando o arquivo ".zip"
+  community.windows.win_unzip:
+    src: C:\Windows\Temp\zabbix_agent-6.4.13-windows-amd64-openssl.zip
+    dest: C:\Program Files\Zabbix Agent\
+    delete_archive: yes
+  tags: zbx-agt
+
+- name: Registrando o serviço Zabbix Agent
+  ansible.windows.win_powershell:
+    script: |
+      & 'C:\Program Files\Zabbix Agent\bin\zabbix_agentd.exe' --config 'C:\Program Files\Zabbix Agent\conf\zabbix_agentd.conf' --install
+  tags: zbx-agt
+
+- name: Iniciando o serviço Zabbix Agent
+  ansible.windows.win_service:
+    name: Zabbix Agent
+    state: started
+    start_mode: auto
+  tags: zbx-agt
+
+- name: Fazendo backup do arquivo de configuração do Zabbix Agent
+  ansible.windows.win_copy:
+    src: C:\Program Files\Zabbix Agent\conf\zabbix_agentd.conf
+    dest: C:\Program Files\Zabbix Agent\conf\zabbix_agentd.conf.bak
+    remote_src: yes
+  tags: zbx-agt
+
+- name: Limpando todo conteúdo do arquivo de configuração do Zabbix Agent
+  ansible.windows.win_shell: |
+    if (Test-Path "C:\Program Files\Zabbix Agent\conf\zabbix_agentd.conf") {
+      Set-Content -Path "C:\Program Files\Zabbix Agent\conf\zabbix_agentd.conf" -Value $null
+    } else {
+      New-Item -Path "C:\Program Files\Zabbix Agent\conf\zabbix_agentd.conf" -ItemType File
+    }
+  tags: zbx-agt
+
+- name: Coletando informações do sistema operacional
+  ansible.windows.win_shell:
+    systeminfo | find "Microsoft Windows"
+  register: operating_system_data
+  tags: zbx-agt
+
+- name: Exibindo versão do sistema operacional
+  ansible.builtin.debug:
+    msg: "{{ operating_system_data.stdout }}"
+  tags: zbx-agt
+
+- name: Extraindo apenas a versão do Windows
+  ansible.builtin.set_fact:
+    formatted_windows_version: "{{ operating_system_data.stdout | regex_search('Microsoft Windows (\\S+)', '\\1') | regex_replace(\"'\", '') | replace('[','') | replace(']','') | replace('/^'','') | replace(''/$','') }}"
+  tags: zbx-agt
+
+- name: Coletando informações do hardware do sistema
+  ansible.windows.win_shell: |
+    systeminfo | Select-String "BIOS"
+  register: hardware_system_data
+  tags: zbx-agt
+
+- name: Verificando o tipo do hardware
+  ansible.builtin.set_fact:
+    is_dell: "{{ 'Dell' in hardware_system_data.stdout }}"
+  tags: zbx-agt
+
+- name: Definindo Hostname com base na versão do Windows e hardware
+  ansible.builtin.set_fact:
+    hostname_value: "{% if is_dell %}dell{% else %}kvm{% endif %} - windows {{ formatted_windows_version }}"
+  tags: zbx-agt
+  
+- name: Exibindo o Hostname
+  ansible.builtin.debug:
+    msg: "Hostname: {{ hostname_value }}"
+  tags: zbx-agt
+
+- name: Editando o arquivo de configuração do Zabbix Agent
+  community.windows.win_lineinfile:
+    path: C:\Program Files\Zabbix Agent\conf\zabbix_agentd.conf
+    regexp: ^#?{{ item.key }}=
+    line: "{{ item.key }}={{ item.value }}"
+  loop:
+    - { key: 'LogFile', value: 'C:\Program Files\Zabbix Agent\zabbix_agentd.log' }
+    - { key: 'Server', value: '192.100.20.10,192.100.10.1,192.168.0.1' }
+    - { key: 'ServerActive', value: '192.100.20.10:10051,192.100.10.1,192.168.0.1' }
+    - { key: 'Hostname', value: '{{ hostname_value}}' }
+  tags: zbx-agt
+
+- name: Parando o serviço Zabbix Agent
+  ansible.windows.win_service:
+    name: Zabbix Agent
+    state: stopped
+  tags: zbx-agt
+
+- name: Aguarde ...
+  ansible.builtin.pause:
+    seconds: 10
+  tags: zbx-agt
+
+- name: Iniciando o serviço Zabbix Agent
+  ansible.windows.win_service:
+    name: Zabbix Agent
+    state: started
+  tags: zbx-agt
+
+#- name: Removendo o serviço Zabbix Agent
+#  ansible.windows.win_service:
+#    name: Zabbix Agent
+#    state: absent
+#  tags: zbx-agt-rm

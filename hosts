@@ -1,0 +1,40 @@
+# # # # # --- HOSTS --- # # # # #
+[win10_kvm_zabbix_agent]
+windows10_kvm ansible_host="{{ win10_kvm_public_ip }}" 
+
+[win11_kvm_zabbix_agent]
+windows11_kvm ansible_host="{{ win11_kvm_public_ip }}"
+
+[win10_dell_zabbix_agent]
+windows10_dell ansible_host="{{ win10_dell_public_ip }}" 
+
+# # # # # --- VARIABLES --- # # # # # 
+[win10_kvm_zabbix_agent:vars]
+ansible_user = "{{ win10_kvm_ansible_user }}" 
+ansible_password = "{{ win10_kvm_ansible_password }}"
+ansible_become_password = "{{ win10_kvm_ansible_become_password }}"
+ansible_port = 5985
+ansible_connection = winrm
+ansible_winrm_transport = ntlm
+# - python3 -m pip install -U requests-ntlm --break-system-packages
+ansible_winrm_server_cert_validation = ignore
+
+[win11_kvm_zabbix_agent:vars]
+ansible_user = "{{ win11_kvm_ansible_user }}" 
+ansible_password = "{{ win11_kvm_ansible_password }}"
+ansible_become_password = "{{ win11_kvm_ansible_become_password }}"
+ansible_port = 5985
+ansible_connection = winrm
+ansible_winrm_transport = ntlm
+# - python3 -m pip install -U requests-ntlm --break-system-packages
+ansible_winrm_server_cert_validation = ignore
+
+[win10_dell_zabbix_agent:vars]
+ansible_user = "{{ win10_dell_ansible_user }}" 
+ansible_password = "{{ win10_dell_ansible_password }}"
+ansible_become_password = "{{ win10_dell_ansible_become_password }}"
+ansible_port = 5985
+ansible_connection = winrm
+ansible_winrm_transport = ntlm
+# - python3 -m pip install -U requests-ntlm --break-system-packages
+ansible_winrm_server_cert_validation = ignore
