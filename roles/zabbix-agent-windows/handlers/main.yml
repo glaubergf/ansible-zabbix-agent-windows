@@ -1,6 +1,6 @@
 ---
 # =============================================================================
-# HAANDLER
+# Handlers
 # Arquivo: roles/zabbix-agent-windows/handlers/main.yml
 #
 # - Este arquivo contém os handlers utilizados pela role.
