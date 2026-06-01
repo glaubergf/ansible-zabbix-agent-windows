@@ -1,0 +1,15 @@
+---
+# =============================================================================
+# HAANDLER
+# Arquivo: roles/zabbix-agent-windows/handlers/main.yml
+#
+# - Este arquivo contém os handlers utilizados pela role.
+# - Os handlers são acionados somente quando há alterações nas tarefas notificadas.
+# - Isso evita reinícios desnecessários do serviço.
+# =============================================================================
+
+# Reinicia o serviço do Zabbix Agent
+- name: HANDLERS | Reiniciando o Zabbix Agent
+  ansible.windows.win_service:
+    name: "{{ zabbix_agent_service_name }}"
+    state: restarted

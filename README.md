@@ -1,150 +1,391 @@
----
+<!---
+# ================================================================
 Projeto: ansible-zabbix-agent-windows
-Descrição: Esse projeto tem o objetivo de instalar e configurar o pacote "zabbix-agent" em
-           sistema Windows.
-Autor: Glauber GF (mcnd2)
-Data: 2024-04-24
 ---
+Descrição: Projeto Ansible modular para instalar, configurar,
+validar, atualizar e remover o Zabbix Agent em hosts Windows.
+---
+Autor..........: Glauber GF (mcnd2)
+Data...........: 24/04/2024
+Atualizado.....: 28/05/2026
+# ================================================================
+-->
 
-# Instalar e Configurar o "Zabbix Agent" com o Ansible em sistemas Windows.
+# Zabbix Agent Windows com Ansible
 
-![Image](https://github.com/glaubergf/ansible-zabbix-agent/blob/main/images/hosts_zabbix.png)
+![Image](https://github.com/glaubergf/ansible-zabbix-agent-windows/blob/main/images/hosts_zabbix.png)
 
-O objetivo desse projeto é executar com o Ansible a automatização para instalar e configurar o Zabbix Agent em sistema baseado no Windows 10 e Windows 11.
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
-O **[Zabbix Agent](https://www.zabbix.com/documentation/6.4/pt/manual/guides/monitor_linux?hl=Zabbix%2Cagent)** é o processo responsável pela coleta de dados. Ele é um componente essencial do Zabbix, que é uma plataforma de monitoramento de rede e sistemas. O Zabbix Agent é instalado nos dispositivos que você deseja monitorar e coleta dados específicos sobre esses dispositivos para enviar de volta ao servidor Zabbix.
 
-Existem dois modos principais de operação para o Zabbix Agent:
+# 📜 Sobre o Projeto
 
-* Modo Passivo:
+Este projeto automatiza a instalação, atualização, configuração, validação e remoção do **Zabbix Agent** em ambientes **Microsoft Windows** utilizando **Ansible**.
 
-  Neste modo, o Zabbix Agent espera passivamente por solicitações do servidor Zabbix. O servidor envia uma solicitação ao agente em intervalos regulares para obter dados de monitoramento, e o agente responde com as informações solicitadas. Este modo é mais comum em ambientes onde a comunicação de saída do dispositivo é limitada, como em firewalls ou em dispositivos de rede.
+O projeto foi totalmente refatorado para uma arquitetura modular, permitindo:
 
-* Modo Ativo:
+- Instalação limpa
+- Upgrade automático entre versões
+- Backup automático antes de atualização
+- Registro e re-registro automático do serviço
+- Configuração automática do firewall
+- Healthcheck da porta do agente
+- Validação pós-instalação
+- Execução granular via tags
 
-  Neste modo, o Zabbix Agent envia ativamente os dados de monitoramento para o servidor Zabbix em intervalos regulares. O agente inicia a comunicação com o servidor e envia os dados sem que o servidor precise solicitar. Esse modo é mais adequado para dispositivos com comunicação de saída permitida e oferece uma abordagem mais proativa para o monitoramento.
 
-Em resumo, o Zabbix Agent é responsável por coletar dados de monitoramento nos dispositivos e enviá-los de volta ao servidor Zabbix, e pode operar tanto no modo passivo quanto no modo ativo, dependendo das necessidades e restrições do ambiente de rede.
+# 📊 Sobre o Zabbix Agent
 
-O **[Ansible](https://docs.ansible.com/ansible/latest/getting_started/index.html)** fornece automação de código aberto que reduz a complexidade e funciona em qualquer lugar. Usar o Ansible permite automatizar praticamente qualquer tarefa. A organização e estruturação do projeto Ansible são fundamentais para garantir a eficiência e a manutenção do código.
+O **[Zabbix Agent](https://www.zabbix.com/documentation/current/pt/manual/concepts/agent)** é responsável pela coleta de métricas e informações do sistema operacional monitorado.
 
-Atualmente o Ansible pertence a **[Red Hat](https://www.redhat.com/pt-br/technologies/management/ansible)**.
+O projeto suporta:
 
-Pressupondo que você já tenha o **Ansible** e as suas dependências instaladas, para executar o projeto, faça o clone do mesmo e em seguida certifique-se que esteja dentro do diretório raíz do projeto. Altere os dados relacionados a seu ambiente e de acordo com as suas necessidades.
+- Zabbix Agent clássico
+- Zabbix Agent 2
 
-Para instalar e configurar o zabbix agent, role "zabbix-agent-windows", execute o comando seguido com a opção "-t" ( --tags ), nome da "tag" que foi dado nas tarefas da role.
 
+# 🤖 Sobre o Ansible
+
+O **[Ansible](https://docs.ansible.com/ansible/latest/index.html)** é uma ferramenta open source para automação, provisionamento e gerenciamento de configuração.
+
+Com este projeto é possível:
+
+- Automatizar deploy do Zabbix Agent em Windows
+- Padronizar ambientes
+- Automatizar upgrades
+- Reduzir falhas operacionais
+- Executar remoção limpa do agente
+
+
+# 🧩 Tecnologias Utilizadas
+
+![Ansible](https://img.shields.io/badge/Ansible-EE0000?logo=ansible&logoColor=white&style=for-the-badge)
+
+- [Ansible](https://www.ansible.com/) — Automação e gerenciamento de configuração.
+
+![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white&style=for-the-badge)
+
+- [Microsoft Windows](https://www.microsoft.com/windows/) — Sistema Operacional.
+
+![Zabbix](https://img.shields.io/badge/Zabbix-D40000?logo=zabbix&logoColor=white&style=for-the-badge)
+
+- [Zabbix](https://www.zabbix.com/) — Plataforma de monitoramento.
+
+
+# 🪟 Sistemas Operacionais Testados
+
+| Sistema | Ambiente | Versão | Status |
+|---|---|---|---|
+| ![Windows 11](https://img.shields.io/badge/Windows%2011-0078D6?logo=windows&logoColor=white&style=for-the-badge) | VM (KVM) | 24H2 | ✅ |
+| ![Windows 11](https://img.shields.io/badge/Windows%2011-0078D6?logo=windows&logoColor=white&style=for-the-badge) | Máquina Física | 23H2 | ✅ |
+| ![Windows 10](https://img.shields.io/badge/Windows%2010-0078D6?logo=windows&logoColor=white&style=for-the-badge) | Máquina Física | 22H2 | ✅ |
+| ![Windows Server](https://img.shields.io/badge/Windows%20Server-0078D6?logo=windows&logoColor=white&style=for-the-badge) | VM (Proxmox) | 2022 | ✅ |
+
+
+# 🚀 Funcionalidades
+
+## ✅ Instalação Automatizada
+
+- Download automático do pacote oficial
+- Extração automática do ZIP
+- Instalação do serviço
+- Inicialização automática
+
+
+## 🔄 Upgrade Automatizado
+
+O projeto detecta automaticamente:
+
+- versão instalada
+- tipo do agente instalado
+- status do serviço
+
+Durante upgrades:
+
+- realiza backup automático
+- remove serviço quebrado automaticamente
+- re-registra o serviço
+- mantém a configuração
+- valida o funcionamento após atualização
+
+
+## 🛡️ Firewall Automático
+
+O projeto cria automaticamente:
+
+- regra de entrada TCP 10050
+- regra identificada para Zabbix Agent
+
+
+## ❤️ Healthcheck
+
+Após instalação ou upgrade:
+
+- valida serviço
+- valida porta TCP 10050
+- valida versão instalada
+- valida inicialização automática
+
+
+# 🛠️ Pré-requisitos
+
+## Controlador Ansible
+
+- Linux/macOS/WSL
+- Ansible instalado
+- Collections:
+  - `ansible.windows`
+  - `community.windows`
+
+Instalação:
+
+```bash
+ansible-galaxy collection install ansible.windows
+ansible-galaxy collection install community.windows
 ```
-ansible-playbook -i host main.yml -t zbx-agt
+
+
+## Hosts Windows
+
+- WinRM habilitado
+- PowerShell disponível
+- Usuário administrador
+- Firewall liberando WinRM
+
+
+# ⚠️ Importante Sobre WinRM
+
+O Ansible utiliza WinRM para comunicação com hosts Windows.
+
+O host precisa possuir:
+
+- WinRM habilitado
+- Usuário administrador
+- Porta liberada
+- Permissões remotas
+
+
+# 📂 Estrutura do Projeto
+
+```bash
+ansible-zabbix-agent-windows
+├── ansible.cfg
+├── CHANGELOG.md
+├── group_vars
+│   └── all.yml
+├── images
+│   ├── dashboard_zabbix.png
+│   └── hosts_zabbix.png
+├── inventory
+│   └── hosts.yml
+├── LICENSE
+├── main.yml
+├── notes
+│   └── WinRM.txt
+├── README.md
+└── roles
+    └── zabbix-agent-windows
+        ├── defaults
+        │   └── main.yml
+        ├── handlers
+        │   └── main.yml
+        ├── tasks
+        │   ├── backup.yml
+        │   ├── configure.yml
+        │   ├── firewall.yml
+        │   ├── healthcheck.yml
+        │   ├── install.yml
+        │   ├── main.yml
+        │   ├── register.yml
+        │   ├── remove.yml
+        │   ├── service.yml
+        │   ├── validate.yml
+        │   └── version.yml
+        └── templates
+            └── zabbix_agent.conf.j2
 ```
 
-Para saber mais opções do Ansible, execute com a opção "-h" ( --help) para mostrar a ajuda para o uso de cada opção.
 
+# 🚀 Fluxo de Funcionamento
+
+A role executa automaticamente:
+
+1. Detecção do agente instalado
+2. Coleta da versão instalada
+3. Backup da instalação atual
+4. Parada do serviço
+5. Remoção segura do diretório antigo
+6. Download da nova versão
+7. Instalação do agente
+8. Configuração do arquivo `.conf`
+9. Registro do serviço
+10. Configuração do firewall
+11. Inicialização do serviço
+12. Healthcheck da porta
+13. Validação final
+
+
+# 💾 Sistema de Backup
+
+Antes de upgrades:
+
+- o diretório atual é salvo automaticamente
+- backups possuem timestamp
+- configuração anterior é preservada
+
+Exemplo:
+
+```powershell
+C:\Programs Files\Zabbix Agent-backup-7.0.26-20260526T010538
 ```
-ansible --help
+
+
+# 🔍 Validação Automática
+
+O projeto valida automaticamente:
+
+| Verificação | Status |
+|---|---|
+| Serviço registrado | ✅ |
+| Serviço iniciado | ✅ |
+| Startup automático | ✅ |
+| Porta 10050 | ✅ |
+| Binário instalado | ✅ |
+| Versão instalada | ✅ |
+
+
+# 🏷️ Tags Disponíveis
+
+| Tag | Descrição |
+|---|---|
+| `zbx-agt-win` | Fluxo completo |
+| `zbx-agt-win-version` | Apenas detecção de versão |
+| `zbx-agt-win-backup` | Apenas backup |
+| `zbx-agt-win-install` | Apenas instalação |
+| `zbx-agt-win-configure` | Apenas configuração |
+| `zbx-agt-win-register` | Apenas registro do serviço |
+| `zbx-agt-win-firewall` | Apenas firewall |
+| `zbx-agt-win-service` | Apenas serviço |
+| `zbx-agt-win-healthcheck` | Apenas healthcheck |
+| `zbx-agt-win-validate` | Apenas validação |
+| `zbx-agt-win-remove` | Apenas remoção |
+
+
+# ▶️ Execução do Projeto
+
+## Clone o repositório
+
+```bash
+git clone https://github.com/glaubergf/ansible-zabbix-agent-windows.git
+
+cd ansible-zabbix-agent-windows
 ```
 
-## Playbook
 
-O **Playbook** define uma série de **roles** que serão aplicadas no alvo (hosts). Cada role é associada a uma **tag** específica, permitindo que as **tarefas** sejam executadas de forma seletiva com base nessas tags.
+## Instalação Completa
 
-Há uma única **roles** nesse projeto que é para instalar o zabbix agent (_zabbix-agent-windows_).
+```bash
+ansible-playbook -i inventory/hosts.yml main.yml -t zbx-agt-win
+```
 
-Segue as especificações das **tarefas** da role.
 
-### zabbix-agent-windows
+## Remover Zabbix Agent
 
-* _zabbix_agent_windows.yml_
+```bash
+ansible-playbook -i inventory/hosts.yml main.yml \
+-e zabbix_agent_state=absent \
+-t zbx-agt-win
+```
 
-Executa uma série de tarefas para instalar e configurar o Zabbix Agent em sistemas Windows. Segue resumo de cada tarefa:
 
-    -> Baixando o pacote Zabbix Agent:
-    Faz o download do pacote do Zabbix Agent e o salva no diretório temporário do Windows.
-    
-    -> Descompactando o arquivo:
-    Extrai o conteúdo do arquivo ZIP baixado para o diretório de instalação do Zabbix Agent, excluindo o arquivo ZIP após a extração.
+## Apenas validação
 
-    -> Registrando o serviço Zabbix Agent:
-    Registra o Zabbix Agent como um serviço do Windows.
+```bash
+ansible-playbook -i inventory/hosts.yml main.yml \
+-t zbx-agt-win-validate
+```
 
-    -> Iniciando o serviço Zabbix Agent:
-    Inicia o serviço recém-registrado.
-    
-    -> Fazendo backup do arquivo de configuração:
-    Faz uma cópia de backup do arquivo de configuração do Zabbix Agent.
-    
-    -> Limpando o conteúdo do arquivo de configuração:
-    Limpa o conteúdo do arquivo de configuração do Zabbix Agent ou cria um novo se não existir.
-    
-    -> Coletando informações do sistema operacional:
-    Obtém informações sobre o sistema operacional Windows.
 
-    -> Exibindo versão do sistema operacional:
-    Exibe a versão do sistema operacional Windows.
+## Apenas healthcheck
 
-    -> Extraindo apenas a versão do Windows:
-    Processa e extrai a versão específica do Windows a partir das informações coletadas.
-    
-    -> Coletando informações do hardware do sistema:
-    Obtém informações sobre o hardware do sistema.
+```bash
+ansible-playbook -i inventory/hosts.yml main.yml \
+-t zbx-agt-win-healthcheck
+```
 
-    -> Verificando o tipo do hardware:
-    Determina se o hardware é da marca Dell.
-    
-    -> Definindo Hostname com base na versão do Windows e hardware:
-    Define o hostname com base na versão do Windows e no tipo de hardware.
-    
-    -> Exibindo o Hostname:
-    Exibe o hostname configurado.
 
-    -> Editando o arquivo de configuração do Zabbix Agent:
-    Adiciona ou atualiza configurações no arquivo de configuração do Zabbix Agent, como o caminho do arquivo de log, os endereços do servidor Zabbix e o hostname.
-    
-    -> Parando o serviço Zabbix Agent:
-    Interrompe temporariamente o serviço do Zabbix Agent.
-    
-    -> Aguardando:
-    Pausa a execução por 10 segundos.
-    
-    -> Iniciando novamente o serviço Zabbix Agent:
-    Inicia o serviço do Zabbix Agent após a pausa.
+## Apenas configuração
 
-A última tarefa que está comentada, é destinada à remoção do serviço Zabbix Agent.
+```bash
+ansible-playbook -i inventory/hosts.yml main.yml \
+-t zbx-agt-win-configure
+```
 
-# Licença
 
-**GNU General Public License** (_Licença Pública Geral GNU_), **GNU GPL** ou simplesmente **GPL**.
+## Modo simulação (Dry Run)
 
-[GPLv3](https://www.gnu.org/licenses/gpl-3.0.html)
+```bash
+ansible-playbook -i inventory/hosts.yml main.yml \
+-t zbx-agt-win \
+--check
+```
 
-------
 
-Copyright (c) 2024 Glauber GF (mcnd2)
+# 🧠 Detecção Automática
 
-Este programa é um software livre: você pode redistribuí-lo e/ou modificar
-sob os termos da GNU General Public License conforme publicada por
-a Free Software Foundation, seja a versão 3 da Licença, ou
-(à sua escolha) qualquer versão posterior.
+O projeto detecta automaticamente:
+
+- tipo do agente
+- versão instalada
+- status do serviço
+- modo de inicialização
+- existência do binário
+- existência da configuração
+
+
+# 🧹 Remoção Completa
+
+A remoção elimina:
+
+- serviço Windows
+- regras de firewall
+- diretório de instalação
+- chaves órfãs do EventLog
+- serviços quebrados do SCM
+
+
+# 📑 Histórico de Alterações
+
+Todas as mudanças importantes deste projeto são documentadas em:
+
+- [CHANGELOG.md](CHANGELOG.md)
+
+
+# 🤝 Contribuições
+
+Contribuições são bem-vindas.
+
+
+# 📜 Licença
+
+Este projeto está licenciado sob os termos da:
+
+**GNU General Public License v3**
+
+https://www.gnu.org/licenses/gpl-3.0.html
+
+
+# 🏛️ Aviso Legal
+
+```text
+Copyright (c) 2024-2026 Glauber GF (mcnd2)
+
+Este programa é software livre: você pode redistribuí-lo e/ou modificá-lo
+sob os termos da GNU General Public License conforme publicada pela
+Free Software Foundation, na versão 3 da Licença ou posterior.
 
 Este programa é distribuído na esperança de ser útil,
-mas SEM QUALQUER GARANTIA; sem mesmo a garantia implícita de
-COMERCIALIZAÇÃO ou ADEQUAÇÃO A UM DETERMINADO FIM. Veja o
-GNU General Public License para mais detalhes.
+mas SEM NENHUMA GARANTIA.
 
-Você deve ter recebido uma cópia da Licença Pública Geral GNU
-junto com este programa. Caso contrário, consulte <https://www.gnu.org/licenses/>.
-
-*
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>
+Veja a Licença Pública Geral GNU para mais detalhes.
+```

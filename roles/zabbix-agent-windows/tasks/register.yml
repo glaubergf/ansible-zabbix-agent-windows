@@ -1,0 +1,51 @@
+---
+# =============================================================================
+# Register
+# roles/zabbix-agent-windows/tasks/register.yml
+# - Fazer skip do bloco inteiro no modo check com o block
+# =============================================================================
+
+- block:
+
+  # Verifica se serviço existe
+  - name: REGISTER | Verificando se o serviço existe
+    ansible.windows.win_service_info:
+      name: "{{ zabbix_agent_service_name }}"
+    register: zabbix_service_info
+  
+  # Remove serviço quebrado/orfão
+  - name: REGISTER | Removendo serviço quebrado
+    ansible.windows.win_shell: |
+      sc.exe delete "{{ zabbix_agent_service_name }}"
+    when:
+      - zabbix_service_info.exists
+      - zabbix_agent_state == "present"
+    failed_when: false
+    changed_when: true
+  
+  # Aguarda SCM remover completamente
+  - name: REGISTER | Aguardando remoção completa do serviço
+    ansible.windows.win_service_info:
+      name: "{{ zabbix_agent_service_name }}"
+    register: zabbix_service_check
+    until: not zabbix_service_check.exists
+    retries: 10
+    delay: 2
+    when:
+      - zabbix_agent_state == "present"
+  
+  # Registrando serviço novamente
+  - name: REGISTER | Registrando Zabbix service
+    ansible.windows.win_command:
+      cmd: >-
+        "{{ zabbix_agent_install_path }}\bin\{{ zabbix_agent_binary }}"
+        --config
+        "{{ zabbix_agent_install_path }}\conf\{{ zabbix_agent_config_file }}"
+        --install
+    register: zabbix_register_service
+    changed_when: zabbix_register_service.rc == 0
+    when:
+      - zabbix_agent_state == "present"
+
+  when:
+    - not ansible_check_mode

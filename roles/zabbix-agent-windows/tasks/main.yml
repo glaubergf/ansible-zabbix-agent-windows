@@ -1,2 +1,119 @@
-# tasks file for roles/zabbix-agent-windows
-- include: zabbix_agent_windows.yml
+---
+# ==========================================================================
+# Task principal - etapa a etapa
+# Arquivo: roles/zabbix-agent-windows/tasks/main.yml
+#
+# - Este arquivo contém as tarefas principais para a role "zabbix-agent-windows".
+# - É responsável por instalar e configurar o agente Zabbix em hosts Windows.
+# - Ele inclui tarefas para garantir que o agente Zabbix seja instalado corretamente,
+#   configurado para se comunicar com o servidor Zabbix.
+# ==========================================================================
+
+# Version
+- name: VERSION | Coletando informações instaladas
+  ansible.builtin.import_tasks: version.yml
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-version
+    - zbx-agt-win-backup
+    - zbx-agt-win-remove
+    - zbx-agt-win-install
+    - zbx-agt-win-configure
+    - zbx-agt-win-register
+    - zbx-agt-win-firewall
+    - zbx-agt-win-service
+    - zbx-agt-win-healthcheck
+    - zbx-agt-win-validate
+
+# Backup
+- name: BACKUP | Backup da instalação atual
+  ansible.builtin.import_tasks: backup.yml
+  when:
+    - zabbix_agent_state == 'present'
+    - zabbix_installed_agent_type != 'none'
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-backup
+
+# Remove
+- name: REMOVE | Removendo Zabbix Agent
+  ansible.builtin.import_tasks: remove.yml
+  when: >
+    (
+      zabbix_agent_state == 'absent'
+    )
+    or
+    (
+      zabbix_agent_state == 'present'
+      and zabbix_installed_agent_type is defined
+      and zabbix_installed_agent_type != 'none'
+      and zabbix_installed_agent_type != zabbix_agent_type
+    )
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-remove
+
+# Install
+- name: INSTALL | Instalando Zabbix Agent
+  ansible.builtin.import_tasks: install.yml
+  when: >
+    (
+      zabbix_agent_state == 'present'
+    )
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-install
+
+# Configure
+- name: CONFIGURE | Configurando Zabbix Agent
+  ansible.builtin.import_tasks: configure.yml
+  when:
+    - zabbix_agent_state == 'present'
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-configure
+
+# Register
+- name: REGISTER | Registrando serviço
+  ansible.builtin.import_tasks: register.yml
+  when:
+    - zabbix_agent_state == 'present'
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-register
+
+# Firewall
+- name: FIREWALL | Configurando firewall
+  ansible.builtin.import_tasks: firewall.yml
+  when:
+    - zabbix_agent_state == 'present'
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-firewall
+
+# Service
+- name: SERVICE | Gerenciando service
+  ansible.builtin.import_tasks: service.yml
+  when:
+    - zabbix_agent_state == 'present'
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-service
+
+# Healthcheck
+- name: HEALTHCHECK | Validando serviço
+  ansible.builtin.import_tasks: healthcheck.yml
+  when:
+    - zabbix_agent_state == 'present'
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-healthcheck
+
+# Validate
+- name: VALIDATE | Validando instalação
+  ansible.builtin.import_tasks: validate.yml
+  when:
+    - zabbix_agent_state == 'present'
+  tags:
+    - zbx-agt-win
+    - zbx-agt-win-validate

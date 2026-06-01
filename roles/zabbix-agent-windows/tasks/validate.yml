@@ -1,0 +1,144 @@
+---
+# =============================================================================
+# Validate
+# Arquivo: roles/zabbix-agent-windows/tasks/validate.yml
+#
+# - Este arquivo contém validações pós-instalação do Zabbix Agent.
+# - As tarefas verificam:
+#   * Estado do serviço
+#   * Modo de inicialização
+#   * Informações gerais do sistema
+# =============================================================================
+
+# Coletando informações do serviço
+- name: VALIDATE | Coletando informações do serviço
+  ansible.windows.win_service_info:
+    name: "{{ zabbix_agent_service_name }}"
+  register: zabbix_agent_service_status
+
+# Coletando informações do serviço
+- name: VALIDATE | Coletando informações do serviço
+  ansible.windows.win_service_info:
+    name: "{{ zabbix_agent_service_name }}"
+  register: zabbix_agent_service_status
+
+# Verifica Agent clássico
+- name: VALIDATE | Verificando Agent clássico
+  ansible.windows.win_stat:
+    path: "{{ zabbix_agent_install_path }}\\bin\\zabbix_agentd.exe"
+  register: zabbix_agentd_exists
+  failed_when: false
+
+# Verifica Agent2
+- name: VALIDATE | Verificando Agent2
+  ansible.windows.win_stat:
+    path: "{{ zabbix_agent_install_path }}\\bin\\zabbix_agent2.exe"
+  register: zabbix_agent2_exists
+  failed_when: false
+
+# Define tipo instalado
+- name: VALIDATE | Definindo tipo instalado
+  ansible.builtin.set_fact:
+    zabbix_installed_agent_type: >-
+      {{
+        'agent2'
+        if (zabbix_agent2_exists.stat is defined and zabbix_agent2_exists.stat.exists)
+        else
+        'agent'
+        if (zabbix_agentd_exists.stat is defined and zabbix_agentd_exists.stat.exists)
+        else
+        'none'
+      }}
+
+# Define binário
+- name: VALIDATE | Definindo binário instalado
+  ansible.builtin.set_fact:
+    zabbix_installed_agent_binary: >-
+      {{
+        'zabbix_agent2.exe'
+        if zabbix_installed_agent_type == 'agent2'
+        else
+        'zabbix_agentd.exe'
+      }}
+  when:
+    - zabbix_installed_agent_type != 'none'
+
+# Define serviço
+- name: VALIDATE | Definindo serviço instalado
+  ansible.builtin.set_fact:
+    zabbix_installed_agent_service: >-
+      {{
+        'Zabbix Agent 2'
+        if zabbix_installed_agent_type == 'agent2'
+        else
+        'Zabbix Agent'
+      }}
+  when:
+    - zabbix_installed_agent_type != 'none'
+
+# Coleta versão
+- name: VALIDATE | Coletando versão instalada
+  ansible.windows.win_command:
+    cmd: >-
+      "{{ zabbix_agent_install_path }}\bin\{{ zabbix_installed_agent_binary }}" --version
+  register: zabbix_agent_installed_version
+  failed_when: false
+  changed_when: false
+  when:
+    - zabbix_installed_agent_type != 'none'
+
+# Define versão limpa
+- name: VALIDATE | Definindo versão limpa
+  ansible.builtin.set_fact:
+    zabbix_installed_agent_version: >-
+      {{
+        (
+          (
+            zabbix_agent_installed_version.stdout | default('')
+          )
+          +
+          (
+            zabbix_agent_installed_version.stderr | default('')
+          )
+        )
+        | regex_findall('[0-9]+\.[0-9]+\.[0-9]+')
+        | first
+        | default('unknown')
+      }}
+  when:
+    - zabbix_installed_agent_type != 'none'
+
+# Exibindo status do serviço
+- name: VALIDATE | Exibindo informações do Sistema e serviço
+  ansible.builtin.debug:
+    msg:
+      - "os: {{ ansible_os_name }}"
+      - "version: {{ ansible_distribution_version }}"
+      - "hostname: {{ ansible_hostname }}"
+      - "service: {{ zabbix_agent_service_name }}"
+      - >-
+        service status:
+        {{
+          zabbix_agent_service_status.services[0].state
+          if zabbix_agent_service_status.services | length > 0
+          else 'not installed'
+        }}
+      - >-
+        initialization:
+        {{
+          zabbix_agent_service_status.services[0].start_mode
+          if zabbix_agent_service_status.services | length > 0
+          else 'not installed'
+        }}
+      - >-
+        installed version:
+        {{
+          zabbix_installed_agent_version
+          if zabbix_installed_agent_type != 'none'
+          else 'not installed'
+        }}
+      - >-
+        installed type:
+        {{
+          zabbix_installed_agent_type
+        }}

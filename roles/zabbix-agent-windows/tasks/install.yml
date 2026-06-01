@@ -1,0 +1,43 @@
+---
+# =======================================================================
+# Install
+# Arquivo: roles/zabbix-agent-windows/tasks/install.yml
+#
+# - Este arquivo contém as tarefas para a instalação do Zabbix Agent em hosts Windows.
+# - As tarefas incluem o download do pacote do Zabbix Agent, a extração do arquivo, o 
+# registro do serviço e a inicialização do serviço.
+# - O arquivo é organizado para garantir que o agente Zabbix seja instalado corretamente 
+# e configurado para iniciar automaticamente com o sistema.
+# - Fazer skip do bloco inteiro no modo check com o block
+# =======================================================================
+
+- block:
+
+  # Baixando o pacote Zabbix Agent
+  - name: INSTALL | Download Zabbix Agent
+    ansible.windows.win_get_url:
+      url: "{{ zabbix_package_url }}"
+      dest: "{{ zabbix_agent_package_path }}"
+  
+  # Criando diretório de instalação do Zabbix Agent
+  - name: INSTALL | Criando diretório se não existir
+    ansible.windows.win_file:
+      path: "{{ zabbix_agent_install_path }}"
+      state: directory
+  
+  # Extraindo o pacote Zabbix Agent
+  - name: INSTALL | Descompactando o pacote
+    community.windows.win_unzip:
+      src: "{{ zabbix_agent_package_path }}"
+      dest: "{{ zabbix_agent_install_path }}"
+      delete_archive: true
+  
+  # Verificando se o serviço existe no sistema
+  - name: INSTALL | Verificando se o binário existe
+    ansible.windows.win_stat:
+      path: "{{ zabbix_agent_install_path }}\\bin\\{{ zabbix_agent_binary }}"
+    register: zabbix_binary_info
+    changed_when: false
+
+  when:
+    - not ansible_check_mode

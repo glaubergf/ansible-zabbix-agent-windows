@@ -1,0 +1,67 @@
+---
+# =============================================================================
+# Remove
+# Arquivo: roles/zabbix-agent-windows/tasks/remove.yml
+#
+# - Este arquivo remove o Zabbix Agent instalado no Windows.
+# - A remoção suporta:
+#   * Agent clássico
+#   * Agent2
+#   * Limpeza do serviço
+#   * Limpeza da regra de firewall
+#   * Remoção do diretório de instalação
+# - Fazer skip do bloco inteiro no modo check com o block
+# =============================================================================
+
+- block:
+
+  # Para serviço do Zabbix Agent
+  - name: REMOVE | Parando serviço
+    ansible.windows.win_service:
+      name: "{{ zabbix_installed_agent_service }}"
+      state: stopped
+    failed_when: false
+  
+  # Remove serviço do Zabbix Agent
+  - name: REMOVE | Removendo serviço
+    ansible.windows.win_command: >
+      "{{ zabbix_agent_install_path }}\bin\{{ zabbix_installed_agent_binary }}"
+      --uninstall
+    failed_when: false
+  
+  # Remove servico orfão/zumbi do SCM (Service Control Manager)
+  - name: REMOVE | Removendo serviço orfão do SCM
+    ansible.windows.win_command: sc.exe delete "{{ zabbix_installed_agent_service }}"
+    failed_when: false
+    changed_when: true
+  
+  # Remove chave órfã EventLog
+  - name: REMOVE | Removendo chave órfã do EventLog
+    ansible.windows.win_regedit:
+      path: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application\{{ zabbix_installed_agent_service }}
+      state: absent
+    failed_when: false
+  
+  #Aguarda remover o serviço completamente
+  - name: REMOVE | Aguardando remoção completa do serviço
+    ansible.windows.win_wait_for:
+      timeout: 5
+    changed_when: false
+  
+  # Remove regra de firewall do Zabbix Agent
+  - name: REMOVE | Removendo firewall rule
+    community.windows.win_firewall_rule:
+      name: "Zabbix Agent"
+      state: absent
+    failed_when: false
+  
+  # Remove diretório de instalação do Zabbix Agent
+  - name: REMOVE | Removendo diretório de instalação
+    ansible.windows.win_file:
+      path: "{{ zabbix_agent_install_path }}"
+      state: absent
+    when:
+      - zabbix_installed_agent_type != 'none'
+
+  when:
+    - not ansible_check_mode

@@ -1,0 +1,43 @@
+---
+# =============================================================================
+# Configure
+# Arquivo: roles/zabbix-agent-windows/tasks/configure.yml
+#
+# - Este arquivo contém as tarefas de configuração do Zabbix Agent.
+# - As tarefas incluem:
+#   * Backup do arquivo de configuração original
+#   * Implantação do template de configuração
+#   * Reinício automático do serviço quando houver alterações
+# - O uso de template garante padronização, idempotência e facilidade
+#   de manutenção.
+# =============================================================================
+
+# Verificando se o arquivo de configuração existe
+- name: CONFIGURE | Verificando se o arquivo de configuração existe
+  ansible.windows.win_stat:
+    path: "{{ zabbix_agent_config_path }}"
+  register: zabbix_agent_config_stat
+
+# Realizando backup do arquivo de configuração atual
+- name: CONFIGURE | Backup do arquivo de configuração
+  ansible.windows.win_copy:
+    src: "{{ zabbix_agent_config_stat.stat.path }}"
+    dest: "{{ zabbix_agent_config_stat.stat.path }}.bak"
+    remote_src: true
+  when:
+    - zabbix_agent_config_stat.stat is defined
+    - zabbix_agent_config_stat.stat.exists
+
+# Garante diretório de configuração
+- name: CONFIGURE | Garantindo diretório de config
+  ansible.windows.win_file:
+    path: "{{ zabbix_agent_install_path }}\\conf"
+    state: directory
+
+# Implantando template do arquivo de configuração
+- name: CONFIGURE | Configurando arquivo {{ zabbix_agent_config_file }}
+  ansible.builtin.template:
+    src: "{{ zabbix_agent_template_file }}"
+    dest: "{{ zabbix_agent_config_path }}"
+  notify:
+    - HANDLERS | Reiniciando o Zabbix Agent

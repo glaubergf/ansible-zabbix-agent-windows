@@ -1,0 +1,25 @@
+---
+# =============================================================================
+# Service
+# Arquivo: roles/zabbix-agent-windows/tasks/service.yml
+#
+# - Este arquivo contém as tarefas relacionadas ao gerenciamento do serviço 
+# do Zabbix Agent.
+# - As tarefas garantem:
+#   * Serviço iniciado
+#   * Inicialização automática no boot
+#   * Estado consistente do serviço
+# - Fazer skip do bloco inteiro no modo check com o block
+# =============================================================================
+
+- block:
+
+  # Garante que o serviço esteja iniciado e habilitado
+  - name: SERVICE | Garantindo serviço iniciado
+    ansible.windows.win_service:
+      name: "{{ zabbix_agent_service_name }}"
+      state: started
+      start_mode: auto
+
+  when:
+    - not ansible_check_mode

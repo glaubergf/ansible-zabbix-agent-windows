@@ -1,0 +1,11 @@
+---
+# =============================================================================
+# Tarefa: Healthcheck
+# Arquivo: roles/zabbix-agent-windows/tasks/healthcheck.yml
+# =============================================================================
+
+- name: HEALTHCHECK | Validando porta 10050
+  ansible.windows.win_wait_for:
+    port: "{{ zabbix_agent_firewall_port }}"
+    host: "127.0.0.1"
+    timeout: 30

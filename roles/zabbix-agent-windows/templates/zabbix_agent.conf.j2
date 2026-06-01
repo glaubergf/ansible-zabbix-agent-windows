@@ -1,0 +1,22 @@
+# =============================================================================
+# Configuração do Zabbix Agent
+# Gerenciado pelo Ansible
+# Arquivo: roles/zabbix-agent-windows/templates/zabbix_agent.conf.j2
+# =============================================================================
+
+# Configuração de Log
+LogFile={{ zabbix_agent_log_path }}
+LogFileSize={{ zabbix_agent_log_file_size }}
+
+# Configuração do Servidor
+Server={{ zabbix_agent_server }}
+ServerActive={{ zabbix_agent_server_active }}
+
+# Configuração do nome do Host
+Hostname={{ zabbix_agent_hostname }}
+
+# Configuração de Performance
+Timeout={{ zabbix_agent_timeout }}
+
+# Configuração de Inclusão
+Include={{ zabbix_agent_include_path }}

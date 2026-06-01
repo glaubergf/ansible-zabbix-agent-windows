@@ -1,0 +1,97 @@
+---
+# ==========================================================================
+# Variavéis da role
+# Arquivo: roles/zabbix-agent-windows/defaults/main.yml
+#
+# - Este arquivo contém as variáveis utilizadas pela role zabbix-agent-windows.
+# - As variáveis definidas aqui são usadas para configurar o agente Zabbix, como a 
+#   URL do pacote, o caminho temporário para download e o diretório de instalação.
+# - As variáveis são organizadas para facilitar a manutenção e a reutilização em 
+#   diferentes ambientes.
+# ==========================================================================
+
+# Versão do Zabbix
+zabbix_agent_stable: "7.4"
+zabbix_agent_version_install: "7.4.6"
+
+# Pacote a ser instalado
+zabbix_package_url: "https://cdn.zabbix.com/zabbix/binaries/stable/{{ zabbix_agent_stable }}/{{ zabbix_agent_version_install }}/zabbix_agent2-{{ zabbix_agent_version_install }}-windows-amd64-openssl-static.zip"
+zabbix_agent_package_path: "C:\\Windows\\Temp\\zabbix_agent-{{ zabbix_agent_version_install }}-windows-amd64-openssl-static.zip"
+
+# Instalação
+zabbix_agent_install_path: "C:\\Program Files\\Zabbix Agent"
+
+# Arquivo de configuração
+zabbix_agent_config_file: >-
+  {{
+    'zabbix_agent2.conf'
+    if zabbix_agent_type == 'agent2'
+    else 'zabbix_agentd.conf'
+  }}
+
+# Diretório do arquivo de configuração
+zabbix_agent_config_path: "{{ zabbix_agent_install_path }}\\conf\\{{ zabbix_agent_config_file }}"
+
+# Arquivo de log
+zabbix_agent_log_file: >-
+  {{
+    'zabbix_agent2.log'
+    if zabbix_agent_type == 'agent2'
+    else 'zabbix_agentd.log'
+  }}
+
+# Diretório do log
+zabbix_agent_log_path: "{{ zabbix_agent_install_path }}\\{{ zabbix_agent_log_file }}"
+
+# Arquivo de include
+zabbix_agent_include_dir: >-
+  {{
+    'zabbix_agent2.d'
+    if zabbix_agent_type == 'agent2'
+    else 'zabbix_agentd.d'
+  }}
+
+# Diretório do arquivo de include
+zabbix_agent_include_path: "{{ zabbix_agent_install_path }}\\conf\\{{ zabbix_agent_include_dir }}\\*.conf"
+
+# Nome do serviço
+zabbix_agent_service_name: >-
+  {{
+    'Zabbix Agent 2'
+    if zabbix_agent_type == 'agent2'
+    else 'Zabbix Agent'
+  }}
+
+# Arquivo de template
+zabbix_agent_template_file: "zabbix_agent.conf.j2"
+
+# Configuração do Zabbix Agent
+zabbix_agent_server: "192.168.0.156"
+zabbix_agent_server_active: "192.168.0.156"
+zabbix_agent_hostname: >-
+  {{ ansible_hostname }}
+zabbix_agent_timeout: "30"
+zabbix_agent_log_file_size: "10"
+
+# Firewall
+zabbix_agent_firewall_enable: true
+zabbix_agent_firewall_port: "10050"
+zabbix_agent_firewall_state: present
+
+# Flags futuras
+zabbix_agent_enable_psk: false
+
+# Tipo do Agent
+zabbix_agent_type: "agent2"
+zabbix_agent_binary: >-
+  {{
+    'zabbix_agent2.exe'
+    if zabbix_agent_type == 'agent2'
+    else 'zabbix_agentd.exe'
+  }}
+
+# Controle de estado
+zabbix_agent_state: present
+
+# Contole de instalação
+zabbix_agent_force_reinstall: false

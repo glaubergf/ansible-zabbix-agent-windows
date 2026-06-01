@@ -1,7 +1,24 @@
 ---
-- hosts: all
-  #become: yes
-  gather_facts: yes
+# ==========================================================================
+# Playbook Principal
+# main.yml
+#
+# - Este é o playbook principal que será executado pelo Ansible. Ele inclui as 
+#   roles e tarefas necessários para configurar o agente Zabbix nos hosts de destino.
+# - O playbook é organizado para ser executado em todos os hosts definidos no inventário, 
+#   com privilégios elevados e coleta de informações habilitada.
+# - As roles incluídas neste playbook são responsáveis por instalar e configurar o agente 
+#   Zabbix, bem como remover quaisquer instalações existentes do agente Zabbix, se necessário.
+# ==========================================================================
+
+- hosts:
+    amd-fx8350-win11
+    dell-n5010-win10
+    pm-winsrv2k22
+    kvm-win11
+    #all
+  gather_facts: true
+  ignore_unreachable: true
 
   roles:
-  - { role: zabbix-agent-windows, tags: zbx-agt }
+  - { role: zabbix-agent-windows, tags: zbx-agt-win }

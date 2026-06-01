@@ -1,0 +1,120 @@
+---
+# =============================================================================
+# Backup
+# Arquivo: roles/zabbix-agent-windows/tasks/backup.yml
+#
+# - Realizar backup antes de upgrade/reinstalação
+# - Preservar arquivos de configuração
+# - Remover instalação antiga de forma limpa
+# - Preparar ambiente para reinstalação segura
+# - Fazer skip do bloco inteiro no modo check com o block
+# =============================================================================
+
+- block:
+
+  # Verifica se diretório existe
+  - name: BACKUP | Verificando se diretório existe
+    ansible.windows.win_stat:
+      path: "{{ zabbix_agent_install_path }}"
+    register: zabbix_install_dir
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_installed_agent_type != "none"
+  
+  # Gera timestamp
+  - name: BACKUP | Gerando timestamp
+    ansible.builtin.set_fact:
+      zabbix_backup_timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+  
+  # Define diretório backup
+  - name: BACKUP | Definindo diretório backup
+    ansible.builtin.set_fact:
+      zabbix_backup_dir: >-
+        {{ zabbix_agent_install_path }}-backup-{{
+        zabbix_installed_agent_version | default('unknown')
+        }}-{{
+        zabbix_backup_timestamp
+        }}
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+  
+  # Para serviço
+  - name: BACKUP | Parando serviço
+    ansible.windows.win_service:
+      name: "{{ zabbix_installed_agent_service }}"
+      state: stopped
+    failed_when: false
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+      - zabbix_installed_agent_type != "none"
+  
+  # Backup do diretório
+  - name: BACKUP | Realizando backup do diretório
+    ansible.windows.win_copy:
+      src: "{{ zabbix_agent_install_path }}"
+      dest: "{{ zabbix_backup_dir }}"
+      remote_src: true
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+  
+  # Remove serviço antigo
+  - name: BACKUP | Removendo serviço antigo
+    ansible.windows.win_command:
+      cmd: >-
+        "{{ zabbix_agent_install_path }}\bin\{{
+        zabbix_installed_agent_binary
+        }}" --uninstall
+    register: zabbix_unregister_service
+    failed_when: false
+    changed_when: zabbix_unregister_service.rc == 0
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+      - zabbix_installed_agent_type != "none"
+  
+  # Finaliza processos restantes
+  - name: BACKUP | Finalizando processos do Zabbix Agent
+    ansible.windows.win_shell: |
+      Get-Process zabbix_agent* -ErrorAction SilentlyContinue | Stop-Process -Force
+    changed_when: true
+    failed_when: false
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+  
+  # Remove chave órfã do EventLog
+  - name: BACKUP | Removendo chave órfã do EventLog
+    ansible.windows.win_regedit:
+      path: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application\{{ zabbix_installed_agent_service }}
+      state: absent
+    failed_when: false
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+      - zabbix_installed_agent_type != "none"
+  
+  # Aguarda liberação de arquivos
+  - name: BACKUP | Aguardando liberação dos arquivos
+    ansible.builtin.pause:
+      seconds: 5
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+  
+  # Remove diretório antigo
+  - name: BACKUP | Removendo diretório antigo
+    ansible.windows.win_file:
+      path: "{{ zabbix_agent_install_path }}"
+      state: absent
+    when:
+      - zabbix_agent_state == "present"
+      - zabbix_install_dir.stat.exists
+
+  when:
+    - not ansible_check_mode

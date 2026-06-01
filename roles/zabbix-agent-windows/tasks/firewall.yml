@@ -1,0 +1,23 @@
+---
+# =============================================================================
+# Firewall
+# Arquivo: roles/zabbix-agent-windows/tasks/firewall.yml
+#  - Fazer skip do bloco inteiro no modo check com o block
+# =============================================================================
+
+- block:
+
+  # Libera a porta 10050 no firewall
+  - name: FIREWALL | Liberando porta do Zabbix Agent no firewall
+    community.windows.win_firewall_rule:
+      name: "Zabbix Agent"
+      localport: "{{ zabbix_agent_firewall_port }}"
+      action: allow
+      direction: in
+      protocol: tcp
+      state: present
+      enabled: true
+    when: zabbix_agent_firewall_enable
+
+  when:
+    - not ansible_check_mode
